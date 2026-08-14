@@ -11,28 +11,49 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  async function runCopilot() {
-    setLoading(true);
-    try {
-      const response = await fetch("http://localhost:8000/api/copilot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, language, code, context })
-      });
-      if (!response.ok) throw new Error("API request failed");
-      setResult(await response.json());
-    } catch (error) {
-      setResult({
-        summary: "Backend is not running yet.",
-        output: "Start FastAPI with: uvicorn app.main:app --reload",
-        suggestions: ["Run the backend on port 8000.", "Then click Run Copilot again."],
-        demo_mode: false
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
+ async function runCopilot() {
+  setLoading(true);
 
+  try {
+    const API_URL = import.meta.env.VITE_API_URL;
+
+    const response = await fetch(`${API_URL}/api/copilot`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode,
+        language,
+        code,
+        context,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("API request failed");
+    }
+
+    setResult(await response.json());
+
+  } catch (error) {
+    console.error("Copilot API Error:", error);
+
+    setResult({
+      summary: "Unable to connect to Copilot backend.",
+      output: "Please check whether the backend is running.",
+      suggestions: [
+        "Check the Render backend URL.",
+        "Check Vercel environment variables.",
+        "Check backend CORS configuration.",
+      ],
+      demo_mode: false,
+    });
+
+  } finally {
+    setLoading(false);
+  }
+}
   return (
     <main className="shell">
       <header className="topbar">
